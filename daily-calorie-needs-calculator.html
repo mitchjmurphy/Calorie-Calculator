@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Daily calorie needs calculator based on age, sex, height, weight and activity level." />
+    <title>Daily Calorie Needs Calculator</title>
+    <style>
+      :root {
+        --accent: #c7f36b;
+        --accent-hover: #d8ff87;
+        --bg: #0d1210;
+        --panel: #171e1a;
+        --panel-alt: #202923;
+        --border: #39463d;
+        --text: #f1f5ef;
+        --muted: #bac5bb;
+        --marker: #efffc9;
+      }
+
+      * { box-sizing: border-box; }
+
+      html {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 85% 0%, rgba(137, 174, 76, 0.14), transparent 32rem),
+          linear-gradient(180deg, #121915 0%, var(--bg) 70%);
+      }
+
+      a { color: var(--accent); }
+
+      .page-shell {
+        width: min(100% - 32px, 820px);
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--accent);
+      }
+
+      .home-link:hover {
+        color: var(--accent-hover);
+      }
+
+      .home-link::before {
+        content: "←";
+        font-size: 1.1em;
+      }
+
+      .intro {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.6;
+      }
+
+      .intro p {
+        margin: 0 0 0.9rem;
+      }
+
+      .calorie-calculator {
+        font-family: "Segoe UI", sans-serif;
+        background: var(--panel);
+        padding: 2em;
+        margin: 0 auto;
+        max-width: 700px;
+        border: 1px solid #2d3830;
+        border-radius: 16px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+        color: var(--text);
+      }
+
+      .calorie-calculator h2 {
+        font-size: 1.6em;
+        text-align: center;
+        margin: 0 0 1.5em;
+        color: var(--text);
+      }
+
+      .calorie-input-group {
+        background: var(--panel-alt);
+        padding: 1.2em;
+        border-radius: 12px;
+        margin-bottom: 1.2em;
+        border: 1px solid var(--border);
+      }
+
+      .calorie-label {
+        font-weight: 600;
+        margin-bottom: 0.8em;
+        font-size: 1.1em;
+        color: var(--text);
+      }
+
+      .calorie-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75em;
+        align-items: center;
+      }
+
+      .calorie-row input[type="number"],
+      .calorie-row select {
+        padding: 0.7em;
+        border: 2px solid #46534a;
+        border-radius: 10px;
+        background: #111713;
+        flex: 1;
+        min-width: 200px;
+        font-size: 1em;
+        transition: border-color 0.2s, background 0.2s;
+        color: var(--text);
+      }
+
+      .calorie-row input[type="number"]:focus,
+      .calorie-row select:focus {
+        border-color: var(--accent);
+        outline: 2px solid rgba(199, 243, 107, 0.2);
+        outline-offset: 1px;
+        background: #151d17;
+      }
+
+      .calorie-buttons {
+        margin: 1.5em 0;
+      }
+
+      .calorie-buttons-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7em;
+        align-items: center;
+      }
+
+      .calorie-buttons button {
+        width: 100%;
+        max-width: 250px;
+        padding: 0.9em;
+        background: var(--accent);
+        color: #17200f;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+      }
+
+      .calorie-buttons button:hover {
+        background: var(--accent-hover);
+        transform: translateY(-1px);
+      }
+
+      .calorie-buttons button:focus-visible {
+        outline: 3px solid var(--text);
+        outline-offset: 3px;
+      }
+
+      .calorie-results {
+        background: #202a1d;
+        padding: 1.5em;
+        border-radius: 16px;
+        border: 1px solid #465a36;
+        text-align: center;
+        margin-top: 1em;
+      }
+
+      .calorie-warning {
+        font-size: 1.1em;
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .calorie-warning strong {
+        font-weight: 700;
+      }
+
+      .calorie-chart-wrapper {
+        margin-top: 1.2em;
+      }
+
+      .calorie-chart-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75em;
+        color: var(--muted);
+        margin-bottom: 0.4em;
+      }
+
+      .calorie-chart-track {
+        position: relative;
+        height: 22px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: linear-gradient(
+          to right,
+          #3b5941 0%, #3b5941 20%,
+          #729344 20%, #729344 60%,
+          #a28a3b 60%, #a28a3b 80%,
+          #9b5144 80%, #9b5144 100%
+        );
+        border: 1px solid #53604c;
+      }
+
+      .calorie-marker {
+        position: absolute;
+        top: -6px;
+        width: 4px;
+        height: 34px;
+        background: var(--marker);
+        border-radius: 4px;
+        left: 0%;
+      }
+
+      .calorie-scale {
+        position: relative;
+        height: 18px;
+        margin-top: 0.4em;
+        font-size: 0.8em;
+        color: var(--muted);
+      }
+
+      .calorie-scale span {
+        position: absolute;
+        transform: translateX(-50%);
+      }
+
+      .calorie-disclaimer {
+        font-size: 0.85em;
+        color: var(--muted);
+        margin-top: 1em;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 600px) {
+        .page-shell {
+          width: min(100% - 20px, 600px);
+          padding-top: 20px;
+        }
+
+        .calorie-calculator {
+          padding: 1.25em;
+        }
+
+        .calorie-row input[type="number"],
+        .calorie-row select,
+        .calorie-buttons button {
+          flex: 1 1 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="home-link" href="./index.html">Back to home</a>
+      </header>
+
+      <div class="calorie-calculator">
+        <h2><strong>Daily Calorie Needs Estimation Calculator</strong></h2>
+        <p class="intro">Use this information as a general guide. For personalised advice or concerns about your weight or nutrition, please speak to a GP, nurse or dietitian.</p>
+
+        <div class="calorie-inputs">
+          <div class="calorie-input-group">
+            <div class="calorie-label">Your age</div>
+            <div class="calorie-row">
+              <input type="number" id="calAge" min="1" max="120" step="1" placeholder="e.g. 35" />
+            </div>
+          </div>
+
+          <div class="calorie-input-group">
+            <div class="calorie-label">Your sex</div>
+            <div class="calorie-row">
+              <select id="calSex">
+                <option value="">Select…</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="calorie-input-group">
+            <div class="calorie-label">Your height (cm)</div>
+            <div class="calorie-row">
+              <input type="number" id="calHeightCm" min="100" max="250" step="0.1" placeholder="e.g. 170" />
+            </div>
+          </div>
+
+          <div class="calorie-input-group">
+            <div class="calorie-label">Your weight (kg)</div>
+            <div class="calorie-row">
+              <input type="number" id="calWeightKg" min="30" max="300" step="0.1" placeholder="e.g. 70" />
+            </div>
+          </div>
+
+          <div class="calorie-input-group">
+            <div class="calorie-label">Your typical activity level</div>
+            <div class="calorie-row">
+              <select id="calActivity">
+                <option value="">Select…</option>
+                <option value="1.2">Sedentary (little or no exercise)</option>
+                <option value="1.375">Lightly active (light exercise 1–3 days a week)</option>
+                <option value="1.55">Moderately active (exercise 3–5 days a week)</option>
+                <option value="1.725">Very active (hard exercise 6–7 days a week)</option>
+                <option value="1.9">Extra active (physical job or twice-daily training)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="calorie-buttons">
+          <div class="calorie-buttons-bottom">
+            <button id="calCalculate" type="button">Calculate daily calories</button>
+            <button id="calReset" type="button">Reset</button>
+          </div>
+        </div>
+
+        <div class="calorie-results" style="display: none;">
+          <div id="calSummary" class="calorie-warning show"></div>
+
+          <div class="calorie-chart-wrapper">
+            <div class="calorie-chart-labels">
+              <span>Low</span>
+              <span>Typical</span>
+              <span>High</span>
+            </div>
+
+            <div class="calorie-chart-track">
+              <div class="calorie-marker" id="calMarker"></div>
+            </div>
+
+            <div class="calorie-scale">
+              <span style="left:0%;">1000</span>
+              <span style="left:20%;">1500</span>
+              <span style="left:40%;">2000</span>
+              <span style="left:60%;">2500</span>
+              <span style="left:80%;">3000</span>
+              <span style="left:100%;">3500+</span>
+            </div>
+          </div>
+
+          <p class="calorie-disclaimer">
+            This calculator uses a standard BMR (basal metabolic rate) formula and activity factors to estimate daily calorie needs.
+            It is a general guide and may not be suitable for everyone, including people who are pregnant, breastfeeding, underweight,
+            have a history of eating disorders, or have specific medical conditions. Always speak to a doctor, dietitian or other
+            appropriately qualified health professional before making significant changes to your diet or weight.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const ageInput = document.getElementById('calAge');
+        const sexSelect = document.getElementById('calSex');
+        const heightInput = document.getElementById('calHeightCm');
+        const weightInput = document.getElementById('calWeightKg');
+        const activitySelect = document.getElementById('calActivity');
+
+        const resultsBox = document.querySelector('.calorie-results');
+        const summaryEl = document.getElementById('calSummary');
+        const markerEl = document.getElementById('calMarker');
+
+        function resetCalorie() {
+          ageInput.value = '';
+          sexSelect.value = '';
+          heightInput.value = '';
+          weightInput.value = '';
+          activitySelect.value = '';
+          summaryEl.innerHTML = '';
+          resultsBox.style.display = 'none';
+          if (markerEl) markerEl.style.left = '0%';
+        }
+
+        function calculateBMR(sex, age, heightCm, weightKg) {
+          if (sex === 'male') {
+            return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+          }
+          return 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+        }
+
+        function calculateCalorie() {
+          const age = parseInt(ageInput.value, 10);
+          const sex = sexSelect.value;
+          const h = parseFloat(heightInput.value);
+          const w = parseFloat(weightInput.value);
+          const activityFactor = parseFloat(activitySelect.value);
+
+          if (
+            isNaN(age) || age <= 0 ||
+            !sex ||
+            isNaN(h) || h <= 0 ||
+            isNaN(w) || w <= 0 ||
+            isNaN(activityFactor) || activityFactor <= 0
+          ) {
+            summaryEl.innerHTML = '<strong>Please enter a valid age, sex, height, weight and activity level.</strong>';
+            resultsBox.style.display = 'block';
+            return;
+          }
+
+          const bmr = calculateBMR(sex, age, h, w);
+          const maintenance = bmr * activityFactor;
+
+          const min = 1000;
+          const max = 3500;
+          const clamped = Math.min(Math.max(maintenance, min), max);
+          const percent = ((clamped - min) / (max - min)) * 100;
+          markerEl.style.left = percent + '%';
+
+          const sexText = sex === 'male' ? 'male' : 'female';
+
+          const bmrRounded = Math.round(bmr);
+          const maintenanceRounded = Math.round(maintenance);
+          const lossTarget = Math.max(maintenanceRounded - 500, 1200);
+          const gainTarget = maintenanceRounded + 300;
+
+          summaryEl.innerHTML = `
+            Your estimated basal metabolic rate (BMR) is <strong>${bmrRounded} calories per day</strong>.<br>
+            To maintain your current weight at your current activity level, you may need around
+            <strong>${maintenanceRounded} calories per day</strong> as a ${age}-year-old ${sexText}.<br><br>
+
+            <strong>As a general guide:</strong><br>
+            • For gradual weight loss, some people aim for about <strong>${lossTarget} calories per day</strong>.<br>
+            • For gradual weight gain, some people aim for about <strong>${gainTarget} calories per day</strong>.<br><br>
+
+            These figures are only estimates. This calculator cannot take account of all medical conditions or individual needs.
+            Please speak to a GP, nurse or dietitian before making big changes to your diet or weight.
+          `;
+
+          resultsBox.style.display = 'block';
+        }
+
+        document.getElementById('calReset').addEventListener('click', resetCalorie);
+        document.getElementById('calCalculate').addEventListener('click', calculateCalorie);
+
+        resetCalorie();
+      });
+    </script>
+  </body>
+</html>
